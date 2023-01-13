@@ -1,22 +1,5 @@
-import java.util.*;
- interface Position<E> {
-    E getElement() throws IllegalStateException;
-}
- interface Positionallist<E> {
-    int size();
-    boolean isEmpty();
-    Position<E> first();
-    Position<E> last();
-    Position<E> before(Position<E> p) throws IllegalArgumentException;
-    Position<E> after(Position<E> p) throws IllegalArgumentException;
-    Position<E> addFirst(E e);
-    Position<E> addLast(E e);
-    Position<E> addBefore(Position<E> p, E e) throws IllegalArgumentException;
-    Position<E> addAfter(Position<E>p , E e) throws IllegalArgumentException;
-    E set(Position<E> p, E e) throws IllegalArgumentException;
-    E remove(Position<E> p) throws IllegalArgumentException;
-}
-    public class  LinkedPositionalList<E> implements Positionallist<E> {
+
+    public class  LinkedPositionalList<E> implements PositionalList<E> {
         private static class Node<E> implements Position<E>{
             private E element;
             private Node<E> prev;
@@ -26,7 +9,6 @@ import java.util.*;
                 this.prev = p;
                 this.next = n;
             }
-            @Override
             public E getElement() throws IllegalStateException {
                 if (next == null)
                     throw new IllegalArgumentException("Position no longer valid");
@@ -68,28 +50,22 @@ import java.util.*;
                 return null;
             return node;
         }
-        @Override
         public int size() {
             return size;
         }
-        @Override
         public boolean isEmpty() {
             return size == 0;
         }
-        @Override
         public Position<E> first() {
             return position(header.getNext());
         }
-        @Override
         public Position<E> last() {
             return position(trailer.getPrev());
         }
-        @Override
         public Position<E> before(Position<E> p) throws IllegalArgumentException {
             Node<E> node = validate(p);
             return position(node.getPrev());
         }
-        @Override
         public Position<E> after(Position<E> p) throws IllegalArgumentException {
             Node<E> node = validate(p);
             return position(node.getNext());
@@ -101,32 +77,26 @@ import java.util.*;
             size++;
             return position(newest);
         }
-        @Override
         public Position<E> addFirst(E e) {
             return addBetween(e, header, header.getNext());
         }
-        @Override
         public Position<E> addLast(E e) {
             return addBetween(e, trailer.getPrev(), trailer);
         }
-        @Override
         public Position<E> addBefore(Position<E> p, E e) throws IllegalArgumentException {
             Node<E> node = validate(p);
             return addBetween(e, node.getPrev(), node);
         }
-        @Override
         public Position<E> addAfter(Position<E> p, E e) throws IllegalArgumentException {
             Node<E> node = validate(p);
             return addBetween(e, node, node.getNext());
         }
-        @Override
         public E set(Position<E> p, E e) throws IllegalArgumentException {
             Node<E> node = validate(p);
             E answer = p.getElement();
             node.setElement(e);
             return answer;
         }
-        @Override
         public E remove(Position<E> p) throws IllegalArgumentException {
             Node<E> node = validate(p);
             Node<E> predecessor = node.getPrev();

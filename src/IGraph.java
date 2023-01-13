@@ -1,4 +1,4 @@
-package PACKAGE_NAME;
-
-public interface IGraph {
+public interface IGraph<V,E> {
+    public int numVertices();
+    public int numEdges();
 }
