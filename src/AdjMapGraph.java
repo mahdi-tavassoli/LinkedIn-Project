@@ -41,7 +41,12 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         public V getElement() {
             return Id;
         }
-
+        public V getName() { return name; }
+        public V getDateOfBirth() { return dateOfBirth; }
+        public V getUniversityLoca() { return univertsityLocation; }
+        public V getField() { return field; }
+        public V getWorkPlace() { return workplace; }
+        public ArrayList<V> getSpecialist() { return specialists; }
         public Map<IVertex<V>, IEdge<E>> getIncoming() throws IllegalArgumentException{
             if (isDirected)
                 return incoming;
@@ -66,7 +71,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
 
     }
     private boolean isDirected;
-
+    private int Size;
     private LinkedList<Vertex<V>> vertices;
     private Map<V,Vertex<V>> vertices2;
     private LinkedList<Edge<E>> edges;
@@ -75,6 +80,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         vertices = new LinkedList<>();
         edges = new LinkedList<>();
         vertices2 = new HashMap<>();
+        Size = 0;
     }
     @SuppressWarnings({"unchecked"})
     private <V> Vertex<V> validate(IVertex<V> v){
@@ -96,6 +102,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         Vertex<V> v = new Vertex<>(id,name,dateOfBirth,univertsityLocation,field,workplace,arraysp,isDirected);
         vertices2.put(id,v);
         vertices.add(v);
+        Size++;
         return (IVertex<V>) v;
     }
     public IVertex<V> getVertex(V Id){
@@ -104,7 +111,6 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
     public IEdge<E> insertEdge(IVertex<V> u, IVertex<V> v, E element) throws IllegalArgumentException{
         if (getEdge(u,v)==null) {
             Edge<E> e = new Edge<>(u, v, element);
-//            e.setPosition(edges.addLast(e));
             edges.add(e);
             Vertex<V> origin = validate(u);
             Vertex<V> destination = validate(v);
@@ -127,6 +133,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             removeEdge(e);
         }
         vertices.remove(vertices.indexOf(v));
+        Size-=1;
     }
     public void removeEdge(IEdge<E> edge) throws IllegalArgumentException{
         Edge<E> e = validate(edge);
@@ -134,9 +141,12 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         Vertex<V> v0 = validate(vertices.get(0));
         Vertex<V> v1 = validate(vertices.get(1));
         v0.getOutgoing().remove(v1);
-        v1.getIncoming().remove(v0);
+        v1.getOutgoing().remove(v0);
         edges.remove(edges.indexOf(e));
     }
+    public int getNewId(){
+        int NEW = Size;
+        return ++NEW;}
     public int numEdges() { return edges.size(); }
     public int numVertices() {
         return vertices.size();
@@ -199,25 +209,34 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (IVertex<V> v : vertices()) {
-            sb.append("Vertex "+ v.getElement()+"\n");
+            sb.append("[ User Id: "+ v.getElement()+" ][ Full name: "+v.getName()+" ]");
+            sb.append("\n[ University: "+ v.getUniversityLoca()+" ][ Field: "+v.getField()+" ]");
+            sb.append("\n[ Work place: "+ v.getWorkPlace()+" ][ Skills: { ");
+            ArrayList<V> array = new ArrayList<>();
+            array = v.getSpecialist();
+            for (int i=0 ; i<array.size(); i++){
+                sb.append((i+1)+"."+array.get(i)+" ");
+            }
+            sb.append("}]\n");
             if (isDirected){
                 sb.append("\t[outgoing]");
             }
-            sb.append("\t" + outDegree(v) + " adjacent vertices:\n");
+            sb.append("\n" +  "--> Connection List: "+outDegree(v) +" <--\n");
             for (IEdge<E> e : outEdges(v)){
                 sb.append("\t\t");
-                sb.append(String.format("(node %s to node %s via edge %s)",v.getElement(),opposite(v,e).getElement(),e.getElement()));
+                sb.append(String.format("(User %s to User %s via edge %s)",v.getElement(),opposite(v,e).getElement(),e.getElement()));
                 sb.append("\n");
                 if (isDirected){
                     sb.append("\t[incoming]");
-                    sb.append("\t" + inDegree(v)+ " adjacent vertices:\n");
+                    sb.append("\t" + inDegree(v)+ " Connection Person:\n");
                     for (IEdge<E> e1 : inEdges(v)){
                         sb.append("\t\t");
-                        sb.append(String.format("(node %s to node %s via edgw %s)",v.getElement(),opposite(v,e1).getElement(), e.getElement()));
+                        sb.append(String.format("(User %s to User %s via edge %s)",v.getElement(),opposite(v,e1).getElement(), e.getElement()));
                         sb.append("\n");
                     }
                 }
             }
+            sb.append("\n");
         }
         return sb.toString();
     }
@@ -283,7 +302,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
     }
     public void printVertex(String id){
         Vertex<V> vertex = validate(vertices2.get(id));
-        System.out.println("Your Profile:");
+        System.out.println("--> Your Profile <--");
         System.out.println("[ Your Id: "+vertex.Id+" ]");
         String[] name = new String[2];
         String str =(String) vertex.name;
@@ -310,6 +329,26 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             System.out.println("  < Field:"+ current.field+" >");
             System.out.println("  < UniverSity: "+current.univertsityLocation+" >");
         }
+    }
+    public int addNewVertex(AdjMapGraph<V,V> graph){
+        int id = graph.getNewId();
+
+        return id;
+    }
+    public boolean checkUser(int id, String name){
+        String ID = Integer.toString(id);
+        if (vertices2.containsKey((V) ID)){
+            Vertex<V> vertex = validate(vertices2.get((V)ID));
+            String[] array = new String[2];
+            String fullName=(String) vertex.name;
+            array = fullName.split(" ");
+            if (array[0].equals(name)){
+                return true;
+            }
+            else
+                return false;
+        }else
+        return false;
     }
 
 }
