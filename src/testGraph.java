@@ -1,6 +1,7 @@
+import java.io.IOException;
 import java.util.*;
 public class testGraph {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         AdjMapGraph<String,String> graph = new AdjMapGraph<String, String>(false);
         graph.ReadJsonFile(graph);
         Scanner input = new Scanner(System.in);
@@ -33,7 +34,7 @@ public class testGraph {
                             System.out.print("[ 2. View All Members ]\n");
                             System.out.print("[ 3. Search Member ]\n");
                             System.out.print("[ 4. Suggested New Connection]\n");
-                            System.out.print("[ 5. Your Request ]\n");
+                            System.out.print("[ 5. Your Requests ]\n");
                             System.out.print("[ 6. Exit from Account]\n");
                             System.out.print("\nPlease Enter Your Menu Choice: ");
                             choice = input.nextInt();
@@ -48,8 +49,8 @@ public class testGraph {
                                     break;
 
                                 case 3:
-                                    System.out.println();
-
+                                    System.out.println("--> Search Member <--");
+                                    graph.Search(ID);
                                     break;
 
                                 case 4:
@@ -57,7 +58,8 @@ public class testGraph {
                                     break;
 
                                 case 5:
-
+                                    System.out.println("--> Requests <--");
+                                    graph.readRequest(graph,Integer.toString(ID));
                                     break;
                                 case 6:
                                     System.out.println("Exiting Program...");
@@ -66,7 +68,6 @@ public class testGraph {
                                 default:
                                     System.out.println("This is not a valid Menu Option! Please Select Another");
                                     break;
-
                             }
                         }
                     }
@@ -86,15 +87,6 @@ public class testGraph {
                     break;
             }
         }
-
-
-
-//        System.out.println(graph.toString());
-//        graph.printVertex("1");
-//        Set<IVertex<String>> known = new HashSet<IVertex<String>>();
-//        Map<IVertex<String>,IEdge<String>> forest = new HashMap<>();
-//        graph.BFS(graph,v1,known,forest);
-//        System.out.println(known.size());
 
     }
 }

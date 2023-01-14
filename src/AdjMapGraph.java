@@ -2,9 +2,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+
+import java.io.*;
 import java.util.*;
 public class AdjMapGraph<V,E> implements IGraph<V,E> {
     private class Vertex<V> implements IVertex<V>{
@@ -17,8 +16,6 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         private V field;
         private V workplace;
         private ArrayList<V> specialists;
-        private List<IVertex<V>> connectionID;
-
         private Map<IVertex<V>, IEdge<E>> outgoing, incoming;
 
         public Vertex(V id,V name,V dateOfBirth, V univertsityLocation, V field, V workplace , ArrayList<V> arraySpe,boolean isDirected) {
@@ -30,14 +27,12 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             this.workplace = workplace;
             this.specialists = new ArrayList<>();
             specialists = arraySpe;
-            connectionID = new LinkedList<>();
             outgoing = new HashMap<IVertex<V>, IEdge<E>>();
             if (isDirected)
                 incoming = new HashMap<IVertex<V>, IEdge<E>>();
             else
                 incoming = outgoing;
         }
-        public void setConnection(List<IVertex<V>> connection){ this.connectionID = connection;}
         public V getElement() {
             return Id;
         }
@@ -289,9 +284,9 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
                     String currCode = (String) connectionId.get(x);
                     IVertex<V> connect = vertices2.get(currCode);
                     connectionList.add(connect);
-                    graph.insertEdge(IVcurrent,connect,element);
+                    if (isConnected(currCode,id)==false)
+                       graph.insertEdge(IVcurrent,connect,element);
                 }
-                current.setConnection(connectionList);
             }
         }
         catch (FileNotFoundException e){e.printStackTrace();}
@@ -320,14 +315,14 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             System.out.println("  { "+(i+1)+". "+spel.get(i)+" }");
         }
         System.out.println("[ Connection persons ]");
-        List<IVertex<V>> connectList = new LinkedList<>();
-        connectList = vertex.connectionID;
-        for (int j=0 ; j<connectList.size() ; j++){
-            Vertex<V> current = validate(connectList.get(j));
-            System.out.println(" [ "+(j+1)+". "+current.name+" ]");
+        for (IEdge<E> e : outEdges(vertex)){
+            int j=1;
+            Vertex<V> current = validate(opposite(vertex,e));
+            System.out.println(" [ "+j+". "+current.name+" ]");
             System.out.println("  < Id: "+ current.Id+" >");
             System.out.println("  < Field:"+ current.field+" >");
             System.out.println("  < UniverSity: "+current.univertsityLocation+" >");
+            j++;
         }
     }
     public int addNewVertex(AdjMapGraph<V,V> graph){
@@ -350,5 +345,241 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }else
         return false;
     }
+    public void Search(int id) throws IOException {
+        String ID = Integer.toString(id);
+        Scanner scanner = new Scanner(System.in);
+        Vertex<V> vertex = validate(vertices2.get((V)ID));
+        boolean searchBollean = true;
+        while (searchBollean){
+            System.out.println("Enter id for searching member or -1 to Exit: ");
+            String number = scanner.next();
+            if (number.equals("-1")){
+                System.out.println("Exiting Search ..." );
+                break;
+            }
+            else {
+                if (checkUserID(number)==true && ID.equals(number)==false){
+                    Vertex<V> person = validate(vertices2.get((V) number));
+                    boolean connection = isConnected(ID,number);
+                    if (connection==true){
+                        System.out.println("[ Connected ]");
+                        System.out.println("[--> Friend Profile ( "+person.Id+" )<--]");
+                        String[] name = new String[2];
+                        String str =(String) person.name;
+                        name = str.split(" ");
+                        System.out.println("[ Friend name: "+name[0]+" ]");
+                        System.out.println("[ Friend Family name: "+name[1]+" ]");
+                        System.out.println("[ University Location: "+person.univertsityLocation+" ]");
+                        System.out.println("[ Friend major : "+person.field+" ]");
+                        System.out.println("[ Friend work place: "+person.workplace+" ]");
+                        System.out.println("[ Friend's Skills: ]");
+                        ArrayList<V> spel = new ArrayList<>();
+                        spel= person.specialists;
+                        for (int i=0 ; i<spel.size() ; i++ ){
+                            System.out.println("  { "+(i+1)+". "+spel.get(i)+" }");
+                        }
+                        System.out.println("[ Friend Connected List: ]");
+                        System.out.print("{");
+                        for (IEdge<E> e : outEdges(person)){
+                            IVertex<V> current = opposite(person,e);
+                            System.out.print("[ "+current.getElement()+" ]");
+                        }
+                        System.out.println("}");
+                        System.out.println("[ For Breaking connection Just Enter 1]");
+                    }else {
+                        System.out.println("[ Unconnected ]");
+                        System.out.println("[--> Private Profile ( "+person.Id+" )<--]");
+                        String[] name = new String[2];
+                        String str =(String) person.name;
+                        name = str.split(" ");
+                        System.out.println("[ Person's name: "+name[0]+" ]");
+                        System.out.println("[ Person's Family name: "+name[1]+" ]");
+                        System.out.println("[ University Location: "+person.univertsityLocation+" ]");
+                        System.out.println("[ Person's major : "+person.field+" ]");
+                        System.out.println("[ For Sending request to connect Just Enter 1]");
+                    }
+                    int requestOrbreake = scanner.nextInt();
+                    if (requestOrbreake==1 && connection==true){
+                        breakConnection(ID,number);
+                        System.out.println("Your connection with ["+person.name+" ("+person.Id+") ] was broken.");
+
+                    }else if (requestOrbreake==1 && connection==false){
+                        sendRequest(ID,number, 0);
+                        System.out.println("Your request sent to ["+person.name+" ("+person.Id+") ]");
+                    }
+                    else if(requestOrbreake!=1)
+                        System.out.println("You entered wrong number :/");
+
+                }else {
+                    System.out.println("The id that you have entered not found :/");
+                    System.out.println("Please try again :)");
+                }
+
+            }
+        }
+
+
+    }
+    public void breakConnection(String idUser, String friend){
+        IVertex<V> user = vertices2.get((V) idUser);
+        IVertex<V> Friend = vertices2.get((V)friend);
+        IEdge<E> e = getEdge(user,Friend);
+        removeEdge(e);
+    }
+    public boolean isConnected(String idUser, String friend){
+        IVertex<V> user = vertices2.get((V) idUser);
+        Vertex<V> Friend = validate(vertices2.get((V)friend));
+        for (IEdge<E> e: outEdges(user)){
+            IVertex<V> connections = opposite(user,e);
+            if (connections.getElement().equals(Friend.Id))
+                return true;
+        }
+        return false;
+    }
+    public boolean checkUserID(String id){
+        if (vertices2.containsKey((V)id)==true)
+            return true;
+        else
+            return false;
+    }
+    public void readRequest(AdjMapGraph<V, String> graph,String ID) throws IOException {
+        ArrayList<String> request = new ArrayList<>();
+        IVertex<V> user = vertices2.get((V) ID);
+        Scanner scanner = new Scanner(System.in);
+        request = readFile(ID);
+        if (request.size()==0){
+            System.out.println("You have not received any request ;/");
+        }else {
+            String[] part = null;
+            for (int i=0 ; i<request.size(); i++){
+                String str = request.get(i);
+                part = str.split("#");
+                if (part[0].compareTo(ID)==0){
+                    IVertex<V> vertex = vertices2.get((V) part[2]);
+                    System.out.println("[ User: "+vertex.getName()+" ("+vertex.getElement()+") has not yet viewed your request! ]");
+                }
+                if (part[2].compareTo(ID)==0){
+                    IVertex<V> vertex = vertices2.get((V) part[0]);
+                    if (part[3].compareTo("0")==0){
+                        System.out.println("[ User: "+vertex.getName()+" ("+vertex.getElement()+") wants to connect with you. ]");
+                        System.out.println("[ 1.Accept ] [ 2.Reject]");
+                        int number = scanner.nextInt();
+                        if (number == 1){
+                            graph.insertEdge(user,vertex,"E-N");
+                            Delete_Request(part[0],part[2],0);
+                            sendRequest(part[2],part[0],1);
+                            System.out.println("[ You accepted the request from User: "+vertex.getName()+" ("+vertex.getElement()+") ]");
+                        }else if (number == 2){
+                            Delete_Request(part[0],part[2],0);
+                            sendRequest(part[2],part[0],-1);
+                            System.out.println("[ You rejected the request from User: "+vertex.getName()+" ("+vertex.getElement()+") ]");
+
+                        }else if (number!=1 && number!=2){
+                            System.out.println("[ * You entered wrong number * ]");
+                        }
+
+                    }
+                    if (part[3].compareTo("1")==0){
+                        System.out.println("[ User: "+vertex.getName()+" ("+vertex.getElement()+") has accepted your request ] :)");
+
+                    }
+                    if (part[3].compareTo("-1")==0){
+                        System.out.println("[ User: "+vertex.getName()+" ("+vertex.getElement()+") has rejected your request ] :/");
+                    }
+                }
+
+            }
+        }
+
+    }
+    public ArrayList<String> readFile(String ID) throws IOException{
+        ArrayList<String> request = new ArrayList<>();
+        FileReader reader1=null;
+        BufferedReader buffer1=null;
+        String line1= null;
+        String[] part = null;
+        try{
+            reader1 = new FileReader("request1.txt");
+            buffer1 = new BufferedReader(reader1);
+            while((line1 = buffer1.readLine())!=null){
+                part = line1.split("#");
+                if(part[2].compareTo(ID)==0 || part[0].compareTo(ID)==0){
+                    request.add(line1);
+                }
+
+            }
+        }
+        finally {
+            reader1.close();
+            buffer1.close();
+        }
+        return request;
+    }
+
+    public void sendRequest(String id1, String id2, int type) throws IOException{
+        FileWriter writer = null;
+        try{
+            writer = new FileWriter("request1.txt",true);
+            writer.write(id1+"#"+" : has sent you request to have connection with : "+"#"+id2+"#"+type+"#\n");
+        }
+        finally {
+            writer.close();
+        }
+
+    }
+
+    public void Delete_Request(String userAction,String user, int type) throws IOException{
+        Formatter formatter1=null,formatter2 = null;
+        FileWriter writer1=null,writer2 = null;
+        FileReader reader1=null,reader2 = null;
+        BufferedReader buffer1=null,buffer2 = null;
+        String line1,line2 = null;
+        String[] part = null;
+        try{
+            formatter1 = new Formatter("request2.txt");
+            writer1 = new FileWriter("request2.txt",true);
+            reader1 = new FileReader("request1.txt");
+            buffer1 = new BufferedReader(reader1);
+            while((line1 = buffer1.readLine())!=null){
+                part = line1.split("#");
+                if(part[0].compareTo(userAction)==0){
+                    if(part[2].compareTo(user)==0){
+                        if (part[3].compareTo(Integer.toString(type))!=0)
+                            writer1.write(line1+"\n");
+                    }
+                    else
+                        writer1.write(line1+"\n");
+                }
+                else
+                    writer1.write(line1+"\n");
+            }
+
+        }
+        finally {
+            formatter1.close();
+            writer1.close();
+            reader1.close();
+            buffer1.close();
+
+        }
+        try {
+            formatter2 = new Formatter("request1.txt");
+            writer2 = new FileWriter("request1.txt",true);
+            reader2 = new FileReader("request2.txt");
+            buffer2 = new BufferedReader(reader2);
+            while((line2 = buffer2.readLine())!=null){
+                writer2.write(line2+"\n");
+            }
+        }
+        finally {
+            formatter2.close();
+            writer2.close();
+            reader2.close();
+            buffer2.close();
+
+        }
+
+    }
+
 
 }
