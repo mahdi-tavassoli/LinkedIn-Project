@@ -297,7 +297,6 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
     }
     public void printVertex(String id){
         Vertex<V> vertex = validate(vertices2.get(id));
-        System.out.println("--> Your Profile <--");
         System.out.println("[ Your Id: "+vertex.Id+" ]");
         String[] name = new String[2];
         String str =(String) vertex.name;
@@ -580,6 +579,9 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }
 
     }
-
+    public void SuggestedList(AdjMapGraph<V,V> garaph , String id){
+        System.out.println(id);
+        printVertex(id);
+    }
 
 }
