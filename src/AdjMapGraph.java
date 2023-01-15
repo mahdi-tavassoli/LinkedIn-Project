@@ -2,14 +2,14 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
 import java.io.*;
 import java.util.*;
+
 public class AdjMapGraph<V,E> implements IGraph<V,E> {
     private class Vertex<V> implements IVertex<V>{
         private V Id;
         private boolean isDirected;
-//        private Position<IVertex<V>> pos;
+        private int point;
         private V name;
         private V dateOfBirth;
         private V univertsityLocation;
@@ -27,12 +27,16 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             this.workplace = workplace;
             this.specialists = new ArrayList<>();
             specialists = arraySpe;
+            this.point = 0;
             outgoing = new HashMap<IVertex<V>, IEdge<E>>();
             if (isDirected)
                 incoming = new HashMap<IVertex<V>, IEdge<E>>();
             else
                 incoming = outgoing;
         }
+        public void resetPoints(){this.point = 0;}
+        public int addPoints(int amount){ return this.point+=amount; }
+        public int getPoint() { return point; }
         public V getElement() {
             return Id;
         }
@@ -182,24 +186,45 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
     public Iterable<IEdge<E>> outEdges(IVertex<V> v){
         return validate(v).getOutgoing().values();
     }
-    public void BFS(AdjMapGraph<V,E> graph, IVertex<V> start, Set<IVertex<V>> known, Map<IVertex<V>, IEdge<E>> forest){
+    public heapPriorityQueue<Integer,String> FindClosetConnection( String start, Map<String,Integer> known){
         Queue<IVertex<V>> queue1 = new LinkedList<>();
-        known.add(start);
-        System.out.println(start.getElement());
-        queue1.add(start);
+        IVertex<V> vertex = vertices2.get((V) start);
+        heapPriorityQueue<Integer,String> closet = new heapPriorityQueue<>(Integer::compareTo);
+        for (IEdge<E> edge : outEdges(vertex)){
+            IVertex<V> pConnected = opposite(vertex,edge);
+            queue1.add(pConnected);
+        }
+        int Currrentlevel = queue1.size();
+        int nextLevel = 0;
+        int stage = 0;
         while (!queue1.isEmpty()){
             IVertex<V> current = queue1.poll();
-            for (IEdge<E> edge : outEdges(current)){
-                IVertex<V> adjacent = opposite(current,edge);
-                if (!known.contains(adjacent)){
-                    known.add(adjacent);
-                    System.out.println(adjacent.getElement());
-                    forest.put(adjacent,edge);
-                    queue1.add(adjacent);
-                }
+            Currrentlevel--;
+            if (Currrentlevel==0){
+                Currrentlevel = nextLevel;
+                nextLevel = 0;
+                stage++;
             }
-        }
+            if (known.size()>20)
+                break;
+            for (IEdge<E> edge : outEdges(current)){
+                if (known.size()>20)
+                    break;
+                IVertex<V> adjacent = opposite(current,edge);
+                if (!known.containsKey(adjacent.getElement()) && known.size()<20 && ((String)adjacent.getElement()).compareTo(start)!=0 && isConnected(start,(String)adjacent.getElement())==false ){
+                    Vertex<V> v = validate(adjacent);
+                    int point = compareToPerson(vertex,adjacent);
+                    v.addPoints(500-(stage*100));
+                    known.put((String)adjacent.getElement(),v.point);
+                    closet.insert(v.point,(String)adjacent.getElement());
+                    queue1.add(adjacent);
+                    nextLevel++;
+                }
 
+            }
+
+        }
+        return closet;
     }
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -324,11 +349,6 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             j++;
         }
     }
-    public int addNewVertex(AdjMapGraph<V,V> graph){
-        int id = graph.getNewId();
-
-        return id;
-    }
     public boolean checkUser(int id, String name){
         String ID = Integer.toString(id);
         if (vertices2.containsKey((V) ID)){
@@ -416,8 +436,6 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
 
             }
         }
-
-
     }
     public void breakConnection(String idUser, String friend){
         IVertex<V> user = vertices2.get((V) idUser);
@@ -514,7 +532,47 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }
         return request;
     }
-
+    public int compareToPerson(IVertex<V> userAction, IVertex<V> user){
+        int points = 0;
+        Vertex<V> v = validate(user);
+        v.resetPoints();
+        String UAName =(String) userAction.getName();
+        String[] UAname = UAName.split(" ");
+        String UName = (String) user.getName();
+        String[] Uname = UName.split(" ");
+        String date1 = (String) userAction.getDateOfBirth();
+        String date2 = (String) user.getDateOfBirth();
+        String uni1 = (String) userAction.getUniversityLoca();
+        String uni2 = (String) user.getUniversityLoca();
+        String field1 = (String) userAction.getField();
+        String field2 = (String) user.getField();
+        String Wplace1 = (String) userAction.getWorkPlace();
+        String Wplace2 = (String) user.getWorkPlace();
+        ArrayList<V> skillList1 = userAction.getSpecialist();
+        ArrayList<V> skillList2 = user.getSpecialist();
+        if (UAname[0].compareTo(Uname[0])==0)
+            points+=100;
+        if (UAname[1].compareTo(Uname[1])==0)
+            points+=50;
+        if (date1.compareTo(date2)==0)
+            points+=150;
+        if (uni1.compareTo(uni2)==0)
+            points+=200;
+        if (field1.compareTo(field2)==0)
+            points +=250;
+        if (Wplace1.compareTo(Wplace2)==0)
+            points+=200;
+        int size = skillList1.size();
+        for (int i=0 ; i<size; i++ ){
+            int calculate = 550 + (size-i)*50;
+            for (int j=0 ; j<skillList2.size() ; j++){
+                if (((String)skillList1.get(i)).compareTo((String)skillList2.get(j))==0)
+                    points+=calculate;
+            }
+        }
+        v.addPoints(points);
+        return points;
+    }
     public void sendRequest(String id1, String id2, int type) throws IOException{
         FileWriter writer = null;
         try{
@@ -526,7 +584,25 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }
 
     }
-
+    public void printSuggestion(String id){
+        Vertex<V> person = validate(vertices2.get((V) id));
+        System.out.println("[ Unconnected ]");
+        System.out.println("[--> Private Profile ( "+person.Id+" )<--]");
+        String[] name = new String[2];
+        String str =(String) person.name;
+        name = str.split(" ");
+        System.out.println("[ Person's name: "+name[0]+" ]");
+        System.out.println("[ Person's Family name: "+name[1]+" ]");
+        System.out.println("[ University Location: "+person.univertsityLocation+" ]");
+        System.out.println("[ Person's major : "+person.field+" ]");
+        System.out.println("[ Person's work place : "+person.workplace+" ]");
+        System.out.println("[ Points : "+person.point+" ]");
+        ArrayList<V> spel = new ArrayList<>();
+        spel= person.specialists;
+        for (int i=0 ; i<spel.size() ; i++ ){
+            System.out.println("  { "+(i+1)+". "+spel.get(i)+" }");
+        }
+    }
     public void Delete_Request(String userAction,String user, int type) throws IOException{
         Formatter formatter1=null,formatter2 = null;
         FileWriter writer1=null,writer2 = null;
@@ -579,9 +655,36 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }
 
     }
-    public void SuggestedList(AdjMapGraph<V,V> garaph , String id){
-        System.out.println(id);
-        printVertex(id);
+    public void SuggestedList(AdjMapGraph<V,E> graph , String id){
+        IVertex<V> vertex = vertices2.get((V) id);
+        Vertex<V> VERTEX = validate(vertex);
+        heapPriorityQueue<Integer,String> heap = new heapPriorityQueue<>(Integer::compareTo);
+        Map<String,Integer> Top10 = new HashMap<>();
+        heap = FindClosetConnection(id,Top10);
+        for (IVertex<V> current : vertices()){
+            String user = (String) current.getElement();
+            if (!isConnected(id,user) && !Top10.containsKey((V) user) && id.compareTo(user)!=0){
+                int points = compareToPerson(vertex,current);
+                int min = 0;
+                if (!heap.isEmpty())
+                 min = heap.min().getKey();
+                if (points>min){
+                    if (!heap.isEmpty())
+                        Top10.remove(heap.removeMin().getValue());
+                    heap.insert(points,user);
+                    Top10.put(user,points);
+                }
+            }
+        }
+        int counter = heap.size();
+        while (heap.size()!=0){
+            System.out.println();
+            System.out.println("[Number: ["+counter+"]]");
+            printSuggestion(heap.removeMin().getValue());
+            counter--;
+        }
+
     }
+
 
 }

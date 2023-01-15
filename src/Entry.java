@@ -1,4 +1,5 @@
-package PACKAGE_NAME;
-
-public interface Entry {
+  public   interface Entry<K,V>{
+        K getKey();
+        V getValue();
 }
+

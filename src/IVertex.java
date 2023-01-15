@@ -8,4 +8,5 @@ public interface IVertex<V> {
     public V getField();
     public V getWorkPlace();
     public ArrayList<V> getSpecialist();
+    public int getPoint();
 }

@@ -1,8 +1,5 @@
 import java.util.ArrayList;
 import java.util.Comparator;
-
-
-
   abstract class AbstractPriorityQueue<K,V> implements PriorityQueue<K,V>{
         protected static class PQEntry<K,V> implements Entry<K,V>{
             private K k;
