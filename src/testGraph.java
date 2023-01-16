@@ -4,6 +4,7 @@ public class testGraph {
     public static void main(String[] args) throws IOException {
         AdjMapGraph<String,String> graph = new AdjMapGraph<String, String>(false);
         graph.ReadJsonFile(graph);
+        graph.formatRequests();
         Scanner input = new Scanner(System.in);
         boolean logIn = true;
         int selection;

@@ -339,8 +339,8 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             System.out.println("  { "+(i+1)+". "+spel.get(i)+" }");
         }
         System.out.println("[ Connection persons ]");
+        int j=1;
         for (IEdge<E> e : outEdges(vertex)){
-            int j=1;
             Vertex<V> current = validate(opposite(vertex,e));
             System.out.println(" [ "+j+". "+current.name+" ]");
             System.out.println("  < Id: "+ current.Id+" >");
@@ -603,6 +603,14 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             System.out.println("  { "+(i+1)+". "+spel.get(i)+" }");
         }
     }
+    public void formatRequests() throws IOException{
+        Formatter formatter = null;
+        try {
+            formatter = new Formatter("request1.txt");
+        }finally {
+            formatter.close();
+        }
+    }
     public void Delete_Request(String userAction,String user, int type) throws IOException{
         Formatter formatter1=null,formatter2 = null;
         FileWriter writer1=null,writer2 = null;
@@ -655,7 +663,8 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }
 
     }
-    public void SuggestedList(AdjMapGraph<V,E> graph , String id){
+    public void SuggestedList(AdjMapGraph<V,E> graph , String id) throws IOException {
+        Scanner scanner = new Scanner(System.in);
         IVertex<V> vertex = vertices2.get((V) id);
         Vertex<V> VERTEX = validate(vertex);
         heapPriorityQueue<Integer,String> heap = new heapPriorityQueue<>(Integer::compareTo);
@@ -682,6 +691,27 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             System.out.println("[Number: ["+counter+"]]");
             printSuggestion(heap.removeMin().getValue());
             counter--;
+        }
+        while (true){
+            System.out.println("[ Do you want send request to one of them? Just enter person's id ...]");
+            System.out.println("[ Exit Enter[-1]]");
+            int number = scanner.nextInt();
+            if (number==-1){
+                System.out.println("--> End Of New Suggested Connections List (Top20) <--");
+                break;
+            }
+            else {
+                String id2 = Integer.toString(number);
+                if (Top10.containsKey(Integer.toString(number))){
+                    IVertex<V> user = vertices2.get((V) id2);
+                    sendRequest(id,id2,0);
+                    Top10.remove(id2);
+                    System.out.println("[ Your request sent to ["+user.getName()+" ("+user.getElement()+") ]]");
+
+                }else {
+                    System.out.println("[ The number that you entered not found or you have sent request before :/ ]");
+                }
+            }
         }
 
     }

@@ -1,7 +1,0 @@
-12# : has sent you request to have connection with : #1#-1#
-13# : has sent you request to have connection with : #1#1#
-1001# : has sent you request to have connection with : #1000#1#
-200# : has sent you request to have connection with : #1#1#
-125# : has sent you request to have connection with : #1#1#
-1000# : has sent you request to have connection with : #2#0#
-1# : has sent you request to have connection with : #1000#1#
