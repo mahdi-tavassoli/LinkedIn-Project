@@ -55,7 +55,75 @@ public class testGraph {
                                     break;
                                 case 4:
                                     System.out.println("--> New Suggested Connections List (Top20) <--");
-                                    graph.SuggestedList(graph,Integer.toString(ID));
+                                    boolean bool = true;
+                                    int uniP = 450;
+                                    int field = 400;
+                                    int wPlace = 400;
+                                    int skillP = 500;
+                                    int stageP = 400;
+                                    while (bool){
+                                        System.out.println("[[1] App's Suggestion ]");
+                                        System.out.println("[[2] Filter Suggestion ]");
+                                        System.out.println("[[3] Exit ]");
+                                        int number = input.nextInt();
+                                        switch (number){
+                                            case 1:
+                                                graph.SuggestedList(graph,Integer.toString(ID), uniP, field,wPlace ,skillP ,stageP);
+                                                bool = false;
+                                                break;
+                                            case 2:
+                                                Map<Integer,Integer> filter = new HashMap<>();
+                                                filter.put(1,-1);
+                                                filter.put(2,-1);
+                                                filter.put(3,-1);
+                                                filter.put(4,-1);
+                                                filter.put(5,-1);
+                                                int choices = 5;
+                                                int counter = 0;
+                                                System.out.println("[ Filter Base On: ]");
+                                                System.out.println("[ You Can Choice 3 Items ]");
+                                                System.out.println("[1] [ University ]");
+                                                System.out.println("[2] [ Field ]");
+                                                System.out.println("[3] [ WorkPlace ]");
+                                                System.out.println("[4] [ Skills ]");
+                                                System.out.println("[5] [ Connection Levels ]");
+                                                System.out.println("[6] [ Exit ]");
+                                                while (choices!=0){
+                                                    int current = input.nextInt();
+                                                    if (filter.containsKey(current)){
+                                                        filter.replace(current,choices);
+                                                        choices--;
+                                                        counter++;
+                                                        if (current==1)
+                                                            System.out.println("["+counter+"][ University ]");
+                                                        else if(current==2)
+                                                            System.out.println("["+counter+"][ Field ]");
+                                                        else if (current == 3)
+                                                            System.out.println("["+counter+"][ WorkPlace ]");
+                                                        else if (current==4)
+                                                            System.out.println("["+counter+"][ Skills ]");
+                                                        else
+                                                            System.out.println("["+counter+"]");
+                                                    }
+                                                    else if (current==6){
+                                                        System.out.println("The filter will be applied based on "+counter+" your selections :)");
+                                                        break;
+                                                    }
+                                                    else
+                                                        System.out.println(" You have entered wrong number :/");
+                                                }
+                                                graph.SuggestedList(graph,Integer.toString(ID), uniP+(filter.get(1)*75), field+(filter.get(2)*75),wPlace+(filter.get(3)*75) ,skillP+(filter.get(4)*75) ,stageP+(filter.get(5)*75));
+                                                bool = false;
+                                                break;
+                                            case 3:
+                                                System.out.println("--> Exit From New Suggested Connection List <--");
+                                                bool = false;
+                                                break;
+                                            default:
+                                                System.out.println("This is not a valid Menu Option! Please Select Another");
+                                                break;
+                                        }
+                                    }
                                     break;
                                 case 5:
                                     System.out.println("--> Requests <--");
@@ -87,6 +155,8 @@ public class testGraph {
                     String fullName = nameNewUser+" "+familyNewUser;
                     System.out.println("--> Please Enter Date Of Birth: [Example: yyyy/mm/dd ] ");
                     String dateOfBrith = input.next();
+                    System.out.println("--> Please Enter Your Email Address: [Example: emial@gmail.com ] ");
+                    String email = input.next();
                     System.out.println("--> Please Enter University Location: [Example: AA] ");
                     String university = input.next();
                     System.out.println("--> Please Enter Your major: [Example: BB] ");
@@ -103,7 +173,8 @@ public class testGraph {
                         String current = input.next();
                         skills.add(i,current);
                     }
-                    IVertex<String> vertex = graph.insertVertex(newID,fullName,dateOfBrith,university,Field,workPlace,skills);
+                    IVertex<String> vertex = graph.insertVertex(newID,fullName,dateOfBrith,email,university,Field,workPlace,skills);
+//                    graph.addNewVertexJSON(newID,fullName,dateOfBrith,email,university,Field,workPlace,skills);
                     System.out.println("[ Your Registration Was Successful By Id Number: ["+vertex.getElement()+"] And Full Name: ["+vertex.getName()+" ]] :)");
                     break;
                 case 3:

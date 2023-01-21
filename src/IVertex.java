@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-
 public interface IVertex<V> {
     public V getElement();
     public V getName();

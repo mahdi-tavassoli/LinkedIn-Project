@@ -2,6 +2,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
 import java.io.*;
 import java.util.*;
 
@@ -10,24 +11,27 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         private V Id;
         private boolean isDirected;
         private int point;
+        private int ConnectionLevel;
         private V name;
         private V dateOfBirth;
+        private V email;
         private V univertsityLocation;
         private V field;
         private V workplace;
         private ArrayList<V> specialists;
         private Map<IVertex<V>, IEdge<E>> outgoing, incoming;
-
-        public Vertex(V id,V name,V dateOfBirth, V univertsityLocation, V field, V workplace , ArrayList<V> arraySpe,boolean isDirected) {
+        public Vertex(V id,V name,V dateOfBirth,V email, V univertsityLocation, V field, V workplace , ArrayList<V> arraySpe,boolean isDirected) {
             this.Id = id;
             this.name = name;
             this.dateOfBirth = dateOfBirth;
+            this.email = email;
             this.univertsityLocation = univertsityLocation;
             this.field = field;
             this.workplace = workplace;
             this.specialists = new ArrayList<>();
             specialists = arraySpe;
             this.point = 0;
+            this.ConnectionLevel = 0;
             outgoing = new HashMap<IVertex<V>, IEdge<E>>();
             if (isDirected)
                 incoming = new HashMap<IVertex<V>, IEdge<E>>();
@@ -37,11 +41,15 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         public void resetPoints(){this.point = 0;}
         public int addPoints(int amount){ return this.point+=amount; }
         public int getPoint() { return point; }
+        public void resetConnection(){this.ConnectionLevel = 0;}
+        public int setConnection(int amount){ return this.ConnectionLevel=amount; }
+        public int getConnectionLevel() { return ConnectionLevel; }
         public V getElement() {
             return Id;
         }
         public V getName() { return name; }
         public V getDateOfBirth() { return dateOfBirth; }
+        public V getEmail() { return email; }
         public V getUniversityLoca() { return univertsityLocation; }
         public V getField() { return field; }
         public V getWorkPlace() { return workplace; }
@@ -97,8 +105,8 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         Edge<E> edge = (Edge<E>) e;
         return edge;
     }
-    public IVertex<V> insertVertex( V  id,V name,V dateOfBirth, V univertsityLocation, V field, V workplace,ArrayList arraysp){
-        Vertex<V> v = new Vertex<>(id,name,dateOfBirth,univertsityLocation,field,workplace,arraysp,isDirected);
+    public IVertex<V> insertVertex( V  id,V name,V dateOfBirth,V email, V univertsityLocation, V field, V workplace,ArrayList arraysp){
+        Vertex<V> v = new Vertex<>(id,name,dateOfBirth,email,univertsityLocation,field,workplace,arraysp,isDirected);
         vertices2.put(id,v);
         vertices.add(v);
         Size++;
@@ -186,7 +194,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
     public Iterable<IEdge<E>> outEdges(IVertex<V> v){
         return validate(v).getOutgoing().values();
     }
-    public heapPriorityQueue<Integer,String> FindClosetConnection( String start, Map<String,Integer> known){
+    public heapPriorityQueue<Integer,String> FindClosetConnection( String start, Map<String,Integer> known,int uniP,int fieldP,int wPlaceP,int skilP,int stageP){
         Queue<IVertex<V>> queue1 = new LinkedList<>();
         IVertex<V> vertex = vertices2.get((V) start);
         heapPriorityQueue<Integer,String> closet = new heapPriorityQueue<>(Integer::compareTo);
@@ -205,18 +213,34 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
                 nextLevel = 0;
                 stage++;
             }
-            if (known.size()>20)
+            if (stage>4)
                 break;
             for (IEdge<E> edge : outEdges(current)){
-                if (known.size()>20)
+                if (stage>4)
                     break;
                 IVertex<V> adjacent = opposite(current,edge);
-                if (!known.containsKey(adjacent.getElement()) && known.size()<20 && ((String)adjacent.getElement()).compareTo(start)!=0 && isConnected(start,(String)adjacent.getElement())==false ){
+                if (!known.containsKey(adjacent.getElement()) && ((String)adjacent.getElement()).compareTo(start)!=0 && isConnected(start,(String)adjacent.getElement())==false ){
                     Vertex<V> v = validate(adjacent);
-                    int point = compareToPerson(vertex,adjacent);
-                    v.addPoints(500-(stage*100));
-                    known.put((String)adjacent.getElement(),v.point);
-                    closet.insert(v.point,(String)adjacent.getElement());
+                    int point = compareToPerson(vertex,adjacent, uniP, fieldP, wPlaceP,skilP);
+                    v.addPoints(stageP-(stage*50));
+                    v.setConnection(stage+1);
+                    if (closet.size()==0){
+                        known.put((String)adjacent.getElement(),v.point);
+                        closet.insert(v.point,(String)adjacent.getElement());
+                    }
+                    else {
+                        if (closet.size()>19){
+                            if ((int) v.point>closet.min().getKey()){
+                                known.put((String)adjacent.getElement(),v.point);
+                                closet.removeMin();
+                                closet.insert(v.point,(String)adjacent.getElement());
+                            }
+
+                        }else {
+                            known.put((String)adjacent.getElement(),v.point);
+                            closet.insert(v.point,(String)adjacent.getElement());
+                        }
+                    }
                     queue1.add(adjacent);
                     nextLevel++;
                 }
@@ -263,13 +287,14 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
     public void ReadJsonFile(AdjMapGraph<V,String> graph){
         JSONParser parser = new JSONParser();
         try {
-            Object o = new JSONParser().parse(new FileReader("users2.json"));
+            Object o = new JSONParser().parse(new FileReader("users1.json"));
             JSONArray array = (JSONArray) o;
             for (int i=0 ; i<array.size() ; i++){
                 JSONObject object = (JSONObject) array.get(i);
                 String id = (String) object.get("id");
                 String name = (String) object.get("name");
                 String dateOfBirth = (String) object.get("dateOfBirth");
+                String email = (String) object.get("email");
                 String universityLocation = (String) object.get("universityLocation");
                 String field = (String) object.get("field");
                 String workplace = (String) object.get("workplace");
@@ -283,7 +308,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
                 for (int x=0; x<connectionId.size() ; x++){
                     arrayConnect[x] = (String) connectionId.get(x);
                 }
-                graph.insertVertex((V)id,(V)name,(V)dateOfBirth,(V)universityLocation,(V)field,(V)workplace,arraySpe);
+                graph.insertVertex((V)id,(V)name,(V)dateOfBirth,(V) email,(V)universityLocation,(V)field,(V)workplace,arraySpe);
             }
             ReadAndSetEdges(graph);
         }
@@ -295,7 +320,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
     public void ReadAndSetEdges(AdjMapGraph<V, String> graph){
         JSONParser parser = new JSONParser();
         try {
-            Object o = new JSONParser().parse(new FileReader("users2.json"));
+            Object o = new JSONParser().parse(new FileReader("users1.json"));
             JSONArray array = (JSONArray) o;
             for (int i=0 ; i<array.size() ; i++){
                 JSONObject object = (JSONObject) array.get(i);
@@ -329,6 +354,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         System.out.println("[ Your name: "+name[0]+" ]");
         System.out.println("[ Your Family name: "+name[1]+" ]");
         System.out.println("[ Date of Birth: "+vertex.dateOfBirth+" ]");
+        System.out.println("[ Email Address: "+vertex.email+" ]");
         System.out.println("[ University Location: "+vertex.univertsityLocation+" ]");
         System.out.println("[ Your major : "+vertex.field+" ]");
         System.out.println("[ Your work place: "+vertex.workplace+" ]");
@@ -345,7 +371,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
             System.out.println(" [ "+j+". "+current.name+" ]");
             System.out.println("  < Id: "+ current.Id+" >");
             System.out.println("  < Field:"+ current.field+" >");
-            System.out.println("  < UniverSity: "+current.univertsityLocation+" >");
+            System.out.println("  < University: "+current.univertsityLocation+" >");
             j++;
         }
     }
@@ -442,6 +468,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         IVertex<V> Friend = vertices2.get((V)friend);
         IEdge<E> e = getEdge(user,Friend);
         removeEdge(e);
+        updateJson(idUser,friend,0);
     }
     public boolean isConnected(String idUser, String friend){
         IVertex<V> user = vertices2.get((V) idUser);
@@ -532,10 +559,11 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }
         return request;
     }
-    public int compareToPerson(IVertex<V> userAction, IVertex<V> user){
+    public int compareToPerson(IVertex<V> userAction, IVertex<V> user,int uniP,int fieldP,int wPlaceP,int skilP){
         int points = 0;
         Vertex<V> v = validate(user);
         v.resetPoints();
+        v.resetConnection();
         String UAName =(String) userAction.getName();
         String[] UAname = UAName.split(" ");
         String UName = (String) user.getName();
@@ -551,20 +579,20 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         ArrayList<V> skillList1 = userAction.getSpecialist();
         ArrayList<V> skillList2 = user.getSpecialist();
         if (UAname[0].compareTo(Uname[0])==0)
-            points+=100;
+            points+=30;
         if (UAname[1].compareTo(Uname[1])==0)
-            points+=50;
+            points+=30;
         if (date1.compareTo(date2)==0)
-            points+=150;
+            points+=50;
         if (uni1.compareTo(uni2)==0)
-            points+=200;
+            points+=uniP;
         if (field1.compareTo(field2)==0)
-            points +=250;
+            points +=fieldP;
         if (Wplace1.compareTo(Wplace2)==0)
-            points+=200;
+            points+=wPlaceP;
         int size = skillList1.size();
         for (int i=0 ; i<size; i++ ){
-            int calculate = 550 + (size-i)*50;
+            int calculate = skilP - (i*20);
             for (int j=0 ; j<skillList2.size() ; j++){
                 if (((String)skillList1.get(i)).compareTo((String)skillList2.get(j))==0)
                     points+=calculate;
@@ -597,6 +625,7 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         System.out.println("[ Person's major : "+person.field+" ]");
         System.out.println("[ Person's work place : "+person.workplace+" ]");
         System.out.println("[ Points : "+person.point+" ]");
+        System.out.println("[ Connection Level : "+person.ConnectionLevel+" ]");
         ArrayList<V> spel = new ArrayList<>();
         spel= person.specialists;
         for (int i=0 ; i<spel.size() ; i++ ){
@@ -663,17 +692,17 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }
 
     }
-    public void SuggestedList(AdjMapGraph<V,E> graph , String id) throws IOException {
+    public void SuggestedList(AdjMapGraph<V,E> graph ,String id,int uniP,int fieldP,int wPlaceP,int skilP,int stageP) throws IOException {
         Scanner scanner = new Scanner(System.in);
         IVertex<V> vertex = vertices2.get((V) id);
         Vertex<V> VERTEX = validate(vertex);
         heapPriorityQueue<Integer,String> heap = new heapPriorityQueue<>(Integer::compareTo);
         Map<String,Integer> Top10 = new HashMap<>();
-        heap = FindClosetConnection(id,Top10);
+        heap = FindClosetConnection(id,Top10, uniP, fieldP, wPlaceP, skilP, stageP);
         for (IVertex<V> current : vertices()){
             String user = (String) current.getElement();
             if (!isConnected(id,user) && !Top10.containsKey((V) user) && id.compareTo(user)!=0){
-                int points = compareToPerson(vertex,current);
+                int points = compareToPerson(vertex,current, uniP, fieldP, wPlaceP, skilP);
                 int min = 0;
                 if (!heap.isEmpty())
                  min = heap.min().getKey();
@@ -715,6 +744,66 @@ public class AdjMapGraph<V,E> implements IGraph<V,E> {
         }
 
     }
+    public void addNewVertexJSON( String  id,String name,String dateOfBirth,String email, String univertsityLocation, String field, String workplace,ArrayList arraysp){
+        JSONObject newUser = new JSONObject();
+        newUser.put("id", id);
+        newUser.put("name", name);
+        newUser.put("dateOfBirth",dateOfBirth);
+        newUser.put("email", email);
+        newUser.put("field",field);
+        newUser.put("universityLocation", univertsityLocation);
+        JSONArray specialties = new JSONArray();
+        specialties.addAll(Arrays.asList(arraysp));
+        newUser.put("specialties", specialties);
+        JSONArray connectionId = new JSONArray();
+        newUser.put("connectionId", connectionId);
+        try {
+            FileReader reader = new FileReader("users1.json");
+            JSONParser jsonParser = new JSONParser();
+            JSONObject jsonObject = (JSONObject) jsonParser.parse(reader);
+            FileWriter file = new FileWriter("users1.json",false);
+            file.write(newUser.toJSONString());
+            file.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
 
+    }
+    public void updateJson(String actionUser,String id, int type){
+        JSONParser parser = new JSONParser();
+        try {
+            Object o = new JSONParser().parse(new FileReader("users1.json"));
+            JSONArray array = (JSONArray) o;
+            for (int i=0 ; i<array.size() ; i++){
+                JSONObject object = (JSONObject) array.get(i);
+                String ID = (String) object.get("id");
+                if ( ID.compareTo(actionUser)==0){
+                    System.out.println("test");
+                    JSONArray connectionId = (JSONArray) object.get("connectionId");
+                    if (type==0){
+                        connectionId.remove(id);
+
+                    }else {
+                        connectionId.add(id);
+                    }
+                }
+                if (ID.compareTo(id)==0){
+                    JSONArray connectionId = (JSONArray) object.get("connectionId");
+                    if (type==0){
+                        connectionId.remove(actionUser);
+                    }else {
+                        connectionId.add(actionUser);
+                    }
+                }
+            }
+        }
+        catch (FileNotFoundException e){e.printStackTrace();}
+        catch (IOException e){e.printStackTrace();}
+        catch (ParseException e){e.printStackTrace();}
+        catch (Exception e){e.printStackTrace();}
+
+    }
 
 }
